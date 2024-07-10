@@ -1,0 +1,107 @@
+// List of suspicious phrases or things that fake people use
+const suspiciousPhrases = [
+    "password",
+    "credit card",
+    "social security number",
+    "click here",
+    "verify your account",
+    "update your information"
+];
+
+// List of commonly suspiciously used companies
+const spoofedCompanies = [
+    "Bank of America",
+    "Paypal",
+    "Amazon",
+    "Apple",
+    "Microsoft",
+    "Google",
+    "Facebook"
+];
+
+// Function to check grammar errors
+function checkGrammar(emailText) {
+    // Count number of non-alphanumeric characters excluding spaces
+    let nonAlphanumericChars = 0;
+    for (let i = 0; i < emailText.length; i++) {
+        const char = emailText.charAt(i);
+        if (!char.match(/[a-zA-Z0-9]/) && char !== ' ') {
+            nonAlphanumericChars++;
+        }
+    }
+    return nonAlphanumericChars;
+}
+
+// Function to check if any suspicious phrases appear in the email
+function checkSuspiciousPhrases(emailText) {
+    const lowerCaseText = emailText.toLowerCase();
+    for (const phrase of suspiciousPhrases) {
+        if (lowerCaseText.includes(phrase)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to check if any spoofed company names appear in the email
+function checkCompanyNames(emailText) {
+    const lowerCaseText = emailText.toLowerCase();
+    for (const company of spoofedCompanies) {
+        if (lowerCaseText.includes(company.toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to validate the email based on various criteria
+function validateEmail(emailText) {
+    // Check grammar
+    const grammarErrors = checkGrammar(emailText);
+    let grammarScore = "Low";
+    if (grammarErrors > 5) {
+        grammarScore = "High";
+    }
+
+    // Check for suspicious phrases
+    const containsSuspiciousPhrases = checkSuspiciousPhrases(emailText);
+    let suspiciousScore = "Low";
+    if (containsSuspiciousPhrases) {
+        suspiciousScore = "High";
+    }
+
+    // Check company name
+    const validCompany = checkCompanyNames(emailText);
+    let companyScore = "High";
+    if (validCompany) {
+        companyScore = "Low";
+    }
+
+    // Calculate overall phishing score
+    let phishingScore = 0;
+    if (grammarScore === "High") {
+        phishingScore += 1;
+    }
+    if (containsSuspiciousPhrases) {
+        phishingScore += 1;
+    }
+    if (companyScore === "High") {
+        phishingScore += 1;
+    }
+
+    // Determine phishing attempt level
+    if (phishingScore >= 2) {
+        return "High Phishing Attempt";
+    } else if (phishingScore === 1) {
+        return "Potential Phishing Attempt";
+    } else {
+        return "Low Phishing Attempt";
+    }
+}
+
+// Example usage: Prompt user for email content
+const emailText = prompt("Enter the email you received:");
+
+// Validate the email and display the result
+const result = validateEmail(emailText);
+console.log(result);
