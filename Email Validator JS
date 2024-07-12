@@ -5,7 +5,12 @@ const suspiciousPhrases = [
     "social security number",
     "click here",
     "verify your account",
-    "update your information"
+    "update your information",
+    "urgent",
+    "immediate action",
+    "text me $",
+    "transfer funds",
+    "bank details"
 ];
 
 // List of commonly suspiciously used companies
@@ -21,15 +26,24 @@ const spoofedCompanies = [
 
 // Function to check grammar errors
 function checkGrammar(emailText) {
-    // Count number of non-alphanumeric characters excluding spaces
     let nonAlphanumericChars = 0;
-    for (let i = 0; i < emailText.length; i++) {
-        const char = emailText.charAt(i);
-        if (!char.match(/[a-zA-Z0-9]/) && char !== ' ') {
+    let repeatedWords = 0;
+    let misspelledWords = 0;
+    const words = emailText.split(/\s+/);
+    for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        if (!word.match(/[a-zA-Z0-9]/)) {
             nonAlphanumericChars++;
         }
+        if (i > 0 && words[i] === words[i - 1]) {
+            repeatedWords++;
+        }
+        // Basic check for misspelled words (words with random characters)
+        if (word.length > 1 && !word.match(/^[a-zA-Z]+$/)) {
+            misspelledWords++;
+        }
     }
-    return nonAlphanumericChars;
+    return { nonAlphanumericChars, repeatedWords, misspelledWords };
 }
 
 // Function to check if any suspicious phrases appear in the email
@@ -56,10 +70,14 @@ function checkCompanyNames(emailText) {
 
 // Function to validate the email based on various criteria
 function validateEmail(emailText) {
+    if (emailText.trim() === "") {
+        return "No Risk (Empty Email)";
+    }
+
     // Check grammar
-    const grammarErrors = checkGrammar(emailText);
+    const { nonAlphanumericChars, repeatedWords, misspelledWords } = checkGrammar(emailText);
     let grammarScore = "Low";
-    if (grammarErrors > 5) {
+    if (nonAlphanumericChars > 5 || repeatedWords > 1 || misspelledWords > 2) {
         grammarScore = "High";
     }
 
@@ -82,26 +100,28 @@ function validateEmail(emailText) {
     if (grammarScore === "High") {
         phishingScore += 1;
     }
-    if (containsSuspiciousPhrases) {
-        phishingScore += 1;
+    if (suspiciousScore === "High") {
+        phishingScore += 2; // Increased weight for suspicious phrases
     }
     if (companyScore === "High") {
         phishingScore += 1;
     }
 
     // Determine phishing attempt level
-    if (phishingScore >= 2) {
+    if (phishingScore >= 3) {
         return "High Phishing Attempt";
-    } else if (phishingScore === 1) {
+    } else if (phishingScore === 2) {
         return "Potential Phishing Attempt";
-    } else {
+    } else if (phishingScore === 1) {
         return "Low Phishing Attempt";
+    } else {
+        return "No Risk";
     }
 }
 
-// Example usage: Prompt user for email content
-const emailText = prompt("Enter the email you received:");
-
-// Validate the email and display the result
-const result = validateEmail(emailText);
-console.log(result);
+// Function to validate and display the result
+function validateAndDisplayResult() {
+    const emailText = document.getElementById('emailText').value;
+    const result = validateEmail(emailText);
+    document.getElementById('result').innerText = result;
+}
